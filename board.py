@@ -20,8 +20,13 @@ class Board():
     def solver(self, player, i, j):
         l = j
         r = j
+<<<<<<< HEAD
         t = i
         b = i
+=======
+
+        # Horizontal
+>>>>>>> 2b2c832 (board.solver() detectando diagonal)
 
         while l > 0:
             if self.board[i][l-1] == player:
@@ -38,6 +43,14 @@ class Board():
         if r-l+1 == 4:
             return True
 
+<<<<<<< HEAD
+=======
+        # Vertical
+
+        t = i
+        b = i
+
+>>>>>>> 2b2c832 (board.solver() detectando diagonal)
         while t > 0:
             if self.board[t-1][j] == player:
                 t -= 1
@@ -52,6 +65,49 @@ class Board():
         
         if b-t+1 == 4:
             return True
+<<<<<<< HEAD
+=======
+        
+        # Diagonal principal
+
+        d1l = [i, j]
+        d1r = [i, j]
+
+        while d1l[0] > 0 and d1l[1] > 0:
+            if self.board[d1l[0]-1, d1l[1]-1] == player:
+                d1l = [d1l[0]-1, d1l[1]-1]
+            else:
+                break
+
+        while d1r[0] < 5 and d1r[1] < 6:
+            if self.board[d1r[0]+1, d1r[1]+1] == player:
+                d1r = [d1r[0]+1, d1r[1]+1]
+            else:
+                break
+
+        if d1r[1]-d1l[1]+1 == 4:
+            return True
+        
+        # Diagonal secundária
+
+        d2l = [i, j]
+        d2r = [i, j]
+
+        while d2l[0] < 5 and d2l[1] > 0:
+            if self.board[d2l[0]+1, d2l[1]-1] == player:
+                d2l = [d2l[0]+1, d2l[1]-1]
+            else:
+                break
+
+        while d2r[0] > 0 and d2r[1] < 6:
+            if self.board[d2r[0]-1, d2r[1]+1] == player:
+                d2r = [d2r[0]-1, d2r[1]+1]
+            else:
+                break
+
+        if d2r[1]-d2l[1]+1 == 4:
+            return True
+>>>>>>> 2b2c832 (board.solver() detectando diagonal)
 
         return False
     
