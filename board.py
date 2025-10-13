@@ -20,13 +20,8 @@ class Board():
     def solver(self, player, i, j):
         l = j
         r = j
-<<<<<<< HEAD
-        t = i
-        b = i
-=======
 
         # Horizontal
->>>>>>> 2b2c832 (board.solver() detectando diagonal)
 
         while l > 0:
             if self.board[i][l-1] == player:
@@ -43,14 +38,11 @@ class Board():
         if r-l+1 == 4:
             return True
 
-<<<<<<< HEAD
-=======
         # Vertical
 
         t = i
         b = i
 
->>>>>>> 2b2c832 (board.solver() detectando diagonal)
         while t > 0:
             if self.board[t-1][j] == player:
                 t -= 1
@@ -65,8 +57,6 @@ class Board():
         
         if b-t+1 == 4:
             return True
-<<<<<<< HEAD
-=======
         
         # Diagonal principal
 
@@ -107,7 +97,6 @@ class Board():
 
         if d2r[1]-d2l[1]+1 == 4:
             return True
->>>>>>> 2b2c832 (board.solver() detectando diagonal)
 
         return False
     
