@@ -1,6 +1,7 @@
 import pygame
-import numpy as np
 from sys import exit
+
+from agente import Agente, PLAYER_AGENT, PLAYER_HUMAN
 from board import Board
 
 if __name__ == "__main__":
@@ -8,7 +9,7 @@ if __name__ == "__main__":
     HEIGHT = 800
     CHIP_SIZE = 100
 
-    tabuleiro = Board()
+    tabuleiro = Board(5,4)
 
     chip_enum = ["Red", "Yellow", "Blue"]
 
@@ -31,6 +32,7 @@ if __name__ == "__main__":
     # Tela Inicial
 
     while game_start:
+        agent = Agente()
         b1 = pygame.Rect(0, 0, 500, 100)
         b1.center = (WIDTH/2, 200)
         b2 = pygame.Rect(0, 0, 500, 100)
@@ -106,7 +108,7 @@ if __name__ == "__main__":
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN and curr_player == PLAYER_HUMAN:
                 success, index = tabuleiro.add_chip(column, curr_player)
 
                 if success:
@@ -118,5 +120,26 @@ if __name__ == "__main__":
                     curr_player = (curr_player + 1) % 2
                     start_time = pygame.time.get_ticks()
 
+        # Jogada do agente
+        if not game_ended and curr_player == PLAYER_AGENT:
+            start_time = pygame.time.get_ticks()
+            col = agent.choose_move(tabuleiro)
+            success, row = tabuleiro.add_chip(col, PLAYER_AGENT)
+            if success:
+                if tabuleiro.solver(PLAYER_AGENT, row, col):
+                    game_ended = True
+                    winner = PLAYER_AGENT
+                tempo[PLAYER_AGENT] = (pygame.time.get_ticks() - start_time) / 1000
+                curr_player = PLAYER_HUMAN
+                start_time = pygame.time.get_ticks()
         pygame.display.update()
         clock.tick(30)
+
+    screen.fill("White")
+    result_text = "Empate!" if winner not in [PLAYER_HUMAN,
+                                              PLAYER_AGENT] else f"Vitória do {'Humano' if winner == PLAYER_HUMAN else 'Agente'}!"
+    end_text = font.render(result_text, True, "Black")
+    screen.blit(end_text, (WIDTH / 2 - end_text.get_width() / 2, HEIGHT / 2 - end_text.get_height() / 2))
+    pygame.display.update()
+    pygame.time.wait(3000)
+    pygame.quit()

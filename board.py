@@ -1,62 +1,54 @@
 import numpy as np
 
-class Board():
-    def __init__(self, board=np.array([[2 for _ in range(7)] for _ in range(6)])):
-        self.board = board
+class Board:
+    def __init__(self, rows=6, cols=7, connect=4):
+        self.rows = rows
+        self.cols = cols
+        self.connect = connect
+        self.board = np.array([[2 for _ in range(cols)] for _ in range(rows)])
 
     def add_chip(self, column, curr_player):
         if self.board[0][column] != 2:
             return (False, 0)
-        
-        for i in range(5, -1, -1):
+
+        for i in range(self.rows - 1, -1, -1):
             if self.board[i][column] == 2:
                 self.board[i][column] = curr_player
-
                 return (True, i)
-    
+        return (False, 0)
+
     def top_row(self):
         return self.board[0]
 
     def solver(self, player, i, j):
+        num_rows, num_cols = self.board.shape
+
+        # ---- horizontal ----
         l = j
         r = j
-        t = i
-        b = i
-
-        while l > 0:
-            if self.board[i][l-1] == player:
-                l -= 1
-            else:
-                break
-
-        while r < 6:
-            if self.board[i][r+1] == player:
-                r += 1
-            else:
-                break
-
-        if r-l+1 == 4:
+        while l > 0 and self.board[i][l - 1] == player:
+            l -= 1
+        while r < num_cols - 1 and self.board[i][r + 1] == player:
+            r += 1
+        if r - l + 1 >= 4:
             return True
 
-        while t > 0:
-            if self.board[t-1][j] == player:
-                t -= 1
-            else:
-                break
-
-        while b < 5:
-            if self.board[b+1][j] == player:
-                b += 1
-            else:
-                break
-        
-        if b-t+1 == 4:
+        # ---- vertical ----
+        t = i
+        b = i
+        while t > 0 and self.board[t - 1][j] == player:
+            t -= 1
+        while b < num_rows - 1 and self.board[b + 1][j] == player:
+            b += 1
+        if b - t + 1 >= 4:
             return True
 
         return False
-    
+
     def copy(self):
-        return Board(self.board.copy())
-    
+        new_board = Board(self.rows, self.cols)
+        new_board.board = self.board.copy()
+        return new_board
+
     def __str__(self):
-        return self.board.__str__()
+        return str(self.board)
