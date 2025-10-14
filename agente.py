@@ -49,11 +49,9 @@ class Agente:
     def board_to_node(self, board: Board, curr_player: int, depth=0, max_depth=4) -> Node:
         rows, cols = board.board.shape
 
-        # 1️⃣ Limite de profundidade (evita explosão combinatória)
         if depth >= max_depth:
             return Node(utility=0)
 
-        # 2️⃣ Verifica estados terminais (vitória)
         for i in range(rows):
             for j in range(cols):
                 piece = board.board[i][j]
@@ -62,11 +60,9 @@ class Agente:
                 if piece == PLAYER_HUMAN and board.solver(PLAYER_HUMAN, i, j):
                     return Node(utility=-1)
 
-        # 3️⃣ Empate
         if np.all(board.top_row() != EMPTY):
             return Node(utility=0)
 
-        # 4️⃣ Expande recursivamente
         node = Node()
 
         next_player = PLAYER_HUMAN if curr_player == PLAYER_AGENT else PLAYER_AGENT
