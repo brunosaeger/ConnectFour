@@ -6,12 +6,13 @@ from Node import Node, minimax
 PLAYER_AGENT = 1   # peça da IA
 PLAYER_HUMAN = 0   # peça do jogador humano
 EMPTY = 2          # valor que representa casa vazia
-N_ROWS, N_COLS = 4, 4
 
 
 class Agente:
-    def __init__(self):
-        pass
+    def __init__(self, rows, cols, max_depth):
+        self.rows = rows
+        self.cols = cols
+        self.max_depth = max_depth
 
     """
     Gera todos os possíveis tabuleiros após uma jogada do jogador atual.
@@ -25,7 +26,7 @@ class Agente:
     def generate_children(self, board: Board, curr_player: int):
         children = []
 
-        for col in range(N_COLS):
+        for col in range(self.cols):
             new_board = board.copy()
             ok, row = new_board.add_chip(col, curr_player)
 
@@ -88,13 +89,11 @@ class Agente:
         best_val = -np.inf
         best_col = None
 
-        max_depth = 8
-
         for col, child_board, win in self.generate_children(board, PLAYER_AGENT):
             if win:
                 return col  # vitória imediata
 
-            node = self.board_to_node(child_board, PLAYER_HUMAN, depth=0, max_depth=max_depth)
+            node = self.board_to_node(child_board, PLAYER_HUMAN, 0, self.max_depth)
             val = minimax(node)
 
             if val > best_val:

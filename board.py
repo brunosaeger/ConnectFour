@@ -35,7 +35,7 @@ class Board:
             else:
                 break
 
-        while r < 6:
+        while r < self.cols-1:
             if self.board[i][r+1] == player:
                 r += 1
             else:
@@ -55,7 +55,7 @@ class Board:
             else:
                 break
 
-        while b < 5:
+        while b < self.rows-1:
             if self.board[b+1][j] == player:
                 b += 1
             else:
@@ -75,7 +75,7 @@ class Board:
             else:
                 break
 
-        while d1r[0] < 5 and d1r[1] < 6:
+        while d1r[0] < self.rows-1 and d1r[1] < self.cols-1:
             if self.board[d1r[0]+1, d1r[1]+1] == player:
                 d1r = [d1r[0]+1, d1r[1]+1]
             else:
@@ -89,13 +89,13 @@ class Board:
         d2l = [i, j]
         d2r = [i, j]
 
-        while d2l[0] < 5 and d2l[1] > 0:
+        while d2l[0] < self.rows-1 and d2l[1] > 0:
             if self.board[d2l[0]+1, d2l[1]-1] == player:
                 d2l = [d2l[0]+1, d2l[1]-1]
             else:
                 break
 
-        while d2r[0] > 0 and d2r[1] < 6:
+        while d2r[0] > 0 and d2r[1] < self.cols-1:
             if self.board[d2r[0]-1, d2r[1]+1] == player:
                 d2r = [d2r[0]-1, d2r[1]+1]
             else:

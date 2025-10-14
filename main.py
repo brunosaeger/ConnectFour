@@ -9,7 +9,10 @@ if __name__ == "__main__":
     HEIGHT = 800
     CHIP_SIZE = 100
 
-    tabuleiro = Board(5,4)
+    N_ROWS = 6
+    N_COLS = 7
+
+    tabuleiro = Board(N_ROWS, N_COLS)
 
     chip_enum = ["Red", "Yellow", "Blue"]
 
@@ -29,10 +32,11 @@ if __name__ == "__main__":
     tempo = [0, 0]
     aval = 0
 
+    agent = Agente(N_ROWS, N_COLS, 3)
+
     # Tela Inicial
 
     while game_start:
-        agent = Agente()
         b1 = pygame.Rect(0, 0, 500, 100)
         b1.center = (WIDTH/2, 200)
         b2 = pygame.Rect(0, 0, 500, 100)
