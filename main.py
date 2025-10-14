@@ -121,9 +121,19 @@ if __name__ == "__main__":
                     start_time = pygame.time.get_ticks()
 
         # Jogada do agente
+        
         if not game_ended and curr_player == PLAYER_AGENT:
             start_time = pygame.time.get_ticks()
-            col = agent.choose_move(tabuleiro)
+
+            if difficulty == 2:  #profissional com ids
+                import time
+                t0 = time.perf_counter()
+                col, aval = agent.choose_move_time(tabuleiro, time_limit=3.0)
+            else:
+                # minimax por profundidade fixa p intermediaro e iniciante
+                col = agent.choose_move(tabuleiro)
+                aval = 0
+
             success, row = tabuleiro.add_chip(col, PLAYER_AGENT)
             if success:
                 if tabuleiro.solver(PLAYER_AGENT, row, col):
@@ -132,6 +142,7 @@ if __name__ == "__main__":
                 tempo[PLAYER_AGENT] = (pygame.time.get_ticks() - start_time) / 1000
                 curr_player = PLAYER_HUMAN
                 start_time = pygame.time.get_ticks()
+
         pygame.display.update()
         clock.tick(30)
 
@@ -143,3 +154,18 @@ if __name__ == "__main__":
     pygame.display.update()
     pygame.time.wait(3000)
     pygame.quit()
+
+
+    # --- BLOCO ANTIGO AQUI AMIGOS SE PRECISAR ---
+# if not game_ended and curr_player == PLAYER_AGENT:
+#     start_time = pygame.time.get_ticks()
+#     col = agent.choose_move(tabuleiro)
+#     success, row = tabuleiro.add_chip(col, PLAYER_AGENT)
+#     if success:
+#         if tabuleiro.solver(PLAYER_AGENT, row, col):
+#             game_ended = True
+#             winner = PLAYER_AGENT
+#         tempo[PLAYER_AGENT] = (pygame.time.get_ticks() - start_time) / 1000
+#         curr_player = PLAYER_HUMAN
+#         start_time = pygame.time.get_ticks()
+# --- FIM BLOCO ANTIGO AMIGOS ---

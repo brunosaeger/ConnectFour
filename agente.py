@@ -1,6 +1,7 @@
 import numpy as np
 from board import Board
 from Node import Node, minimax
+import time
 
 
 PLAYER_AGENT = 1   # peça da IA
@@ -102,3 +103,52 @@ class Agente:
                 best_col = col
 
         return -1 if best_col is None else best_col
+
+    def choose_move_time(self, board: Board, time_limit: float = 3.0):
+        start = time.perf_counter()
+        deadline = start + time_limit
+
+        best_col = None
+        best_val = -np.inf
+        depth = 1
+
+        while True:
+            if time.perf_counter() >= deadline:
+                break
+
+            cur_best_col = None
+            cur_best_val = -np.inf
+
+            for col, child_board, win in self.generate_children(board, PLAYER_AGENT):
+                if time.perf_counter() >= deadline:
+                    break
+
+                if win:
+                    return col, 1_000_000_000 #vitoria forçada
+                
+
+                node = self.board_to_node(child_board, PLAYER_HUMAN, depth=0, max_depth=depth)
+                val = minimax(node)
+
+                if val > cur_best_val:
+                    cur_best_val = val
+                    cur_best_col = col
+
+            if cur_best_col is not None:
+                best_col, best_val = cur_best_col, cur_best_val
+
+
+            if best_val >= 1_000_000_000:
+                break
+
+            depth += 1
+
+            if best_col is None:
+                for col, _, _ in self.generate_children(board, PLAYER_AGENT):
+                    best_col = col
+                    best_val = 0
+                    break
+
+            return best_col, best_val
+        
+        
