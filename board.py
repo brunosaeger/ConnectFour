@@ -1,11 +1,13 @@
 import numpy as np
 
 class Board:
-    def __init__(self, rows=6, cols=7, connect=4):
+    def __init__(self, rows=6, cols=7):
         self.rows = rows
         self.cols = cols
-        self.connect = connect
         self.board = np.array([[2 for _ in range(cols)] for _ in range(rows)])
+    
+    def getBoard(self):
+        return self.board
 
     def add_chip(self, column, curr_player):
         if self.board[0][column] != 2:
@@ -21,13 +23,10 @@ class Board:
         return self.board[0]
 
     def solver(self, player, i, j):
-        num_rows, num_cols = self.board.shape
+        # Horizontal
 
-        # ---- horizontal ----
         l = j
         r = j
-
-        # Horizontal
 
         while l > 0:
             if self.board[i][l-1] == player:
@@ -105,11 +104,11 @@ class Board:
             return True
 
         return False
-
+    """
     def copy(self):
         new_board = Board(self.rows, self.cols)
         new_board.board = self.board.copy()
         return new_board
-
+    """
     def __str__(self):
         return str(self.board)

@@ -2,7 +2,7 @@ import pygame
 from sys import exit
 
 from agente import Agente, PLAYER_AGENT, PLAYER_HUMAN
-from board import Board
+from bitboard import Bitboard
 
 if __name__ == "__main__":
     WIDTH = 700
@@ -12,7 +12,7 @@ if __name__ == "__main__":
     N_ROWS = 6
     N_COLS = 7
 
-    tabuleiro = Board(N_ROWS, N_COLS)
+    tabuleiro = Bitboard(N_ROWS, N_COLS)
 
     chip_enum = ["Red", "Yellow", "Blue"]
 
@@ -102,9 +102,11 @@ if __name__ == "__main__":
         pygame.draw.rect(screen, "Dark Blue", pygame.Rect(0, 100 + CHIP_SIZE, WIDTH, HEIGHT-CHIP_SIZE))
         pygame.draw.rect(screen, "Black", pygame.Rect(0, 100, WIDTH, CHIP_SIZE))
 
-        for i in range(len(tabuleiro.board)):
-            for j in range(len(tabuleiro.board[i])):
-                pygame.draw.circle(screen, chip_enum[tabuleiro.board[i][j]], (CHIP_SIZE*j + CHIP_SIZE/2, CHIP_SIZE + 100 + CHIP_SIZE*i + CHIP_SIZE/2), CHIP_SIZE/2)
+        tabuleiro_m = tabuleiro.toMatrix()
+
+        for i in range(len(tabuleiro_m)):
+            for j in range(len(tabuleiro_m[i])):
+                pygame.draw.circle(screen, chip_enum[tabuleiro_m[i][j]], (CHIP_SIZE*j + CHIP_SIZE/2, CHIP_SIZE + 100 + CHIP_SIZE*i + CHIP_SIZE/2), CHIP_SIZE/2)
 
         pygame.draw.circle(screen, chip_enum[curr_player], (CHIP_SIZE * column + CHIP_SIZE/2, CHIP_SIZE/2 + 100), CHIP_SIZE/2)
 
@@ -113,10 +115,8 @@ if __name__ == "__main__":
                 pygame.quit()
                 exit()
             elif event.type == pygame.MOUSEBUTTONDOWN and curr_player == PLAYER_HUMAN:
-                success, index = tabuleiro.add_chip(column, curr_player)
-
-                if success:
-                    if tabuleiro.solver(curr_player, index, column):
+                if tabuleiro.add_chip(column):
+                    if tabuleiro.solver(column):
                         game_ended = True
                         winner = curr_player
                     
@@ -125,7 +125,6 @@ if __name__ == "__main__":
                     start_time = pygame.time.get_ticks()
 
         # Jogada do agente
-        
         if not game_ended and curr_player == PLAYER_AGENT:
             start_time = pygame.time.get_ticks()
 
@@ -138,9 +137,11 @@ if __name__ == "__main__":
                 col = agent.choose_move(tabuleiro)
                 aval = 0
 
-            success, row = tabuleiro.add_chip(col, PLAYER_AGENT)
-            if success:
-                if tabuleiro.solver(PLAYER_AGENT, row, col):
+            if tabuleiro.add_chip(col):
+                if tabuleiro.solver(col, verbose=True):
+                    print(f"col: {col}")
+                    print(f"curr: {tabuleiro.curr_position}")
+                    print(f"mask: {tabuleiro.mask}")
                     game_ended = True
                     winner = PLAYER_AGENT
                 tempo[PLAYER_AGENT] = (pygame.time.get_ticks() - start_time) / 1000
