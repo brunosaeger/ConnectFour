@@ -17,9 +17,15 @@ class Bitboard:
     def top_mask(self, col):
         return (1 << (Bitboard.HEIGHT - 1)) << col * Bitboard.HEIGHT
     
+    def top_rows_mask(self, rows):
+        return Bitboard.BOARD_MASK ^ self.bottom_rows_mask(Bitboard.HEIGHT - rows)
+
     def bottom_mask(self, col):
         return 1 << col * Bitboard.HEIGHT
     
+    def bottom_rows_mask(self, rows):
+        return ((1 << rows) - 1) * Bitboard.BOTTOM_MASK
+
     def column_mask(self, col):
         return ((1 << Bitboard.HEIGHT) - 1) << col * Bitboard.HEIGHT
     
@@ -63,7 +69,7 @@ class Bitboard:
         # Diagonal 1
         m = pos & (pos >> 5)
         m &= (m >> 10)
-        m &= 0b111000111000111000111000111000111000111000
+        m &= self.top_rows_mask(3)
 
         if m:
             return True
@@ -71,7 +77,7 @@ class Bitboard:
         # Diagonal 2
         m = pos & (pos >> (Bitboard.HEIGHT+1))
         m &= (m >> (2*(Bitboard.HEIGHT+1)))
-        m &= 0b000111000111000111000111000111000111000111
+        m &= self.bottom_rows_mask(3)
 
         if m:
             return True
@@ -79,7 +85,7 @@ class Bitboard:
         # Vertical;
         m = pos & (pos >> 1)
         m &= (m >> 2)
-        m &= 0b000111000111000111000111000111000111000111
+        m &= self.bottom_rows_mask(3)
 
         if m:
             return True
@@ -87,38 +93,119 @@ class Bitboard:
         return False
 
     def possibleWins(self):
-        wins = 0
+        # Máscara com espaços livres e espaços do jogador
         pos = (self.mask ^ Bitboard.BOARD_MASK) | self.curr_position
+        return self.possibleConnects(pos)
+        
+    def possibleConnects(self, pos, connect=4):
+        shifts = connect-1
+        wins = 0
 
         # Horizontal
-        m = pos & (pos >> (Bitboard.HEIGHT))
-        m &= (m >> (Bitboard.HEIGHT * 2))
+        m = pos
+        for _ in range(shifts):
+            m &= (m >> (Bitboard.HEIGHT))
 
         wins += m.bit_count()
 
         # Diagonal 1
-        m = pos & (pos >> 5)
-        m &= (m >> 10)
-        m &= 0b111000111000111000111000111000111000111000
+        m = pos
+        for _ in range(shifts):
+            m &= (m >> 5)
+
+        m &= self.top_rows_mask(shifts)
         
         wins += m.bit_count()
 
         # Diagonal 2
-        #m = pos & 0b111000111100111110111111011111001111000111
-        m = pos & (pos >> (Bitboard.HEIGHT+1))
-        m &= (m >> (2*(Bitboard.HEIGHT+1)))
-        m &= 0b000111000111000111000111000111000111000111
+        m = pos
+        for _ in range(shifts):
+            m &= (m >> (Bitboard.HEIGHT+1))
+
+        m &= self.bottom_rows_mask(Bitboard.HEIGHT - shifts)
 
         wins += m.bit_count()
 
-        # Vertical;
-        m = pos & (pos >> 1)
-        m &= (m >> 2)
-        m &= 0b000111000111000111000111000111000111000111
+        # Vertical
+        m = pos
+        for _ in range(shifts):
+            m &= (m >> 1)
+
+        m &= self.bottom_rows_mask(Bitboard.HEIGHT - shifts)
 
         wins += m.bit_count()
 
         return wins
+
+    def intermediate_heur(self):
+        weights = [1, 10, 100]
+        values = self.partialSequences()
+
+        values[1] *= weights[1]
+        values[2] *= weights[2]
+
+        return sum(values)
+
+    def partialSequences(self):
+        values = [0, 0, 0]
+
+        for i in range(3):
+            values[i] = self.possibleConnects(self.curr_position, connect=i+1)
+        
+        values[1] -= values[2] * 2
+        values[0] -= values[1] * 2
+        values[0] -= values[2] * 3
+
+        return values
+
+    def adv_heur(self):
+        weights = [1, 10, 100]
+        values = self.partialSequencesBlock()
+
+        values[1] *= weights[1]
+        values[2] *= weights[2]
+
+        return sum(values)
+
+    def blockings(self):
+        op_board = self.curr_position ^ self.mask
+        cont = 0
+        blocks = [0, 0, 0]
+
+        for i in range(Bitboard.WIDTH * Bitboard.HEIGHT):
+            mask = (1 << i)
+
+            if self.curr_position & mask:
+                cont += 1
+
+                if op_board & (1 << (i+1)):
+                    blocks[cont-1] += 1
+            else:
+                cont = 0
+        
+        return blocks
+
+    def partialSequencesBlock(self):
+        seq = self.partialSequences()
+        blocks = self.blockings()
+
+        return [seq[i] - blocks[i] for i in range(len(seq))]
+
+    def centrality(self, curr_pos=None, mask=None):
+        if curr_pos is None:
+            curr_pos = self.curr_position
+        if mask is None:
+            mask = self.mask
+
+        weights = [1, 5, 1, 10, 1, 5, 1]
+        value = 0
+        pos = (mask ^ Bitboard.BOARD_MASK) | curr_pos
+
+        for i in range(len(weights)):
+            m = pos & self.column_mask(i)
+            value += m.bit_count() * weights[i]
+
+        return value
 
     def toMatrix(self):
         array = np.array([], dtype=int)

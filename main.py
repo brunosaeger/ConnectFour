@@ -136,9 +136,10 @@ if __name__ == "__main__":
                 import time
                 t0 = time.perf_counter()
                 col, aval = agent.choose_move_time(tabuleiro, time_limit=3.0)
-            else:
-                # minimax por profundidade fixa p intermediaro e iniciante
-                col = agent.choose_move(tabuleiro)
+            elif difficulty == 1:  # intermediario com minimax ordenado
+                col = agent.choose_move_alphabeta(tabuleiro, 5)
+            else:  # iniciante com minimax simples
+                col = agent.choose_move(tabuleiro, 3)
                 aval = 0
 
             if tabuleiro.canPlay(col):
