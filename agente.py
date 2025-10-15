@@ -1,6 +1,6 @@
 import numpy as np
 from bitboard import Bitboard
-from Node import Node, minimax
+from Node import Node, minimax, alphabeta, ordered_alphabeta
 import time
 
 
@@ -82,7 +82,7 @@ class Agente:
         @:return int: Coluna escolhida (0–6), ou -1 se não houver jogadas válidas.
     """
 
-    def choose_move(self, board: Bitboard) -> int:
+    def choose_move(self, board: Bitboard, max_depth: int) -> int:
         best_val = -np.inf
         best_col = None
 
@@ -90,7 +90,7 @@ class Agente:
             if win:
                 return col  # vitória imediata
 
-            node = self.board_to_node(child_board, PLAYER_HUMAN, 0, self.max_depth)
+            node = self.board_to_node(child_board, PLAYER_HUMAN, 0, max_depth)
             val = minimax(node)
 
             if val > best_val:
@@ -98,6 +98,25 @@ class Agente:
                 best_col = col
 
         return -1 if best_col is None else best_col
+
+    def choose_move_alphabeta(self, board: Bitboard, max_depth: int) -> int:
+        best_val = -np.inf
+        best_col = None
+        
+        for col, child_board, win in self.generate_children(board):
+            if win:
+                return col  # vitória imediata
+
+            node = self.board_to_node(child_board, PLAYER_HUMAN, 0, max_depth)
+            val = alphabeta(node)
+
+            if val > best_val:
+                best_val = val
+                best_col = col  
+                
+        return -1 if best_col is None else best_col
+        
+        
     
     def board_to_node_time(self, board: Bitboard, curr_player: int, depth=0, max_depth=4) -> Node:
 
@@ -146,7 +165,7 @@ class Agente:
                 
 
                 node = self.board_to_node(child_board, PLAYER_HUMAN, 0, np.inf)
-                val = minimax(node)
+                val = ordered_alphabeta(node)
 
                 if val > cur_best_val:
                     cur_best_val = val
@@ -168,5 +187,4 @@ class Agente:
                     break
 
             return best_col, best_val
-        
         
