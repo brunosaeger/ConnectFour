@@ -30,16 +30,10 @@ class Bitboard:
         self.curr_position ^= self.mask
 
     def add_chip(self, column):
-        if self.canPlay(column):
-            if not self.solver(column):
-                self.changePlayer()
-                # Adiciona peça
-                self.mask |= self.mask + self.bottom_mask(column)
-                self.moves += 1
-
-            return True
-        
-        return False
+        self.changePlayer()
+        # Adiciona peça
+        self.mask |= self.mask + self.bottom_mask(column)
+        self.moves += 1
 
     def draw(self):
         return self.mask & Bitboard.TOP_MASK == Bitboard.TOP_MASK
@@ -53,79 +47,78 @@ class Bitboard:
 
         return l
 
-    def solver(self, col, verbose=False):
+    def solver(self, col):
         pos = self.curr_position
         pos |= (self.mask + self.bottom_mask(col)) & self.column_mask(col)
-        print(pos)
-        return self.alignment(pos, verbose)
+        return self.alignment(pos)
 
-    def alignment(self, pos, verbose):
+    def alignment(self, pos):
         # Horizontal 
-        m = pos & (pos >> (Bitboard.HEIGHT+1))
-        if(m & (m >> (2*(Bitboard.HEIGHT+1)))):
-            if verbose:
-                print("H")
+        m = pos & (pos >> (Bitboard.HEIGHT))
+        m &= (m >> (Bitboard.HEIGHT * 2))
+
+        if m:
             return True
 
         # Diagonal 1
-        m = pos & (pos >> Bitboard.HEIGHT)
-        if(m & (m >> (2*Bitboard.HEIGHT))):
-            if verbose:
-                print("D1")
+        m = pos & (pos >> 5)
+        m &= (m >> 10)
+        m &= 0b111000111000111000111000111000111000111000
+
+        if m:
             return True
 
-        # Diagonal 2 
-        m = pos & (pos >> (Bitboard.HEIGHT+2))
-        if(m & (m >> (2*(Bitboard.HEIGHT+2)))):
-            if verbose:
-                print("D2")
+        # Diagonal 2
+        m = pos & (pos >> (Bitboard.HEIGHT+1))
+        m &= (m >> (2*(Bitboard.HEIGHT+1)))
+        m &= 0b000111000111000111000111000111000111000111
+
+        if m:
             return True
 
         # Vertical;
         m = pos & (pos >> 1)
-        if(m & (m >> 2)):
-            if verbose:
-                print("V")
+        m &= (m >> 2)
+        m &= 0b000111000111000111000111000111000111000111
+
+        if m:
             return True
 
         return False
-    
-    def possible(self):
-        return (self.mask + Bitboard.BOTTOM_MASK) & Bitboard.BOARD_MASK
 
-    def winning_positions(self, pos, mask):
-        """
-        Retorna um binário com todas as posições em que uma jogada causará a vitória
-        """
-
-        # Vertical
-        r = (pos << 1) & (pos << 2) & (pos << 3)
+    def possibleWins(self):
+        wins = 0
+        pos = (self.mask ^ Bitboard.BOARD_MASK) | self.curr_position
 
         # Horizontal
-        p = (pos << (Bitboard.HEIGHT+1)) & (pos << 2*(Bitboard.HEIGHT+1))
-        r |= p & (pos << 3*(Bitboard.HEIGHT+1))
-        r |= p & (pos >> (Bitboard.HEIGHT+1))
-        p >>= 3*(Bitboard.HEIGHT+1)
-        r |= p & (pos << (Bitboard.HEIGHT+1))
-        r |= p & (pos >> 3*(Bitboard.HEIGHT+1))
+        m = pos & (pos >> (Bitboard.HEIGHT))
+        m &= (m >> (Bitboard.HEIGHT * 2))
 
-        # Diagonal Primária
-        p = (pos << Bitboard.HEIGHT) & (pos << 2*Bitboard.HEIGHT)
-        r |= p & (pos << 3*Bitboard.HEIGHT)
-        r |= p & (pos >> Bitboard.HEIGHT)
-        p >>= 3*Bitboard.HEIGHT
-        r |= p & (pos << Bitboard.HEIGHT)
-        r |= p & (pos >> 3*Bitboard.HEIGHT)
+        wins += m.bit_count()
 
-        # Diagonal Secundária
-        p = (pos << (Bitboard.HEIGHT+2)) & (pos << 2*(Bitboard.HEIGHT+2))
-        r |= p & (pos << 3*(Bitboard.HEIGHT+2))
-        r |= p & (pos >> (Bitboard.HEIGHT+2))
-        p >>= 3*(Bitboard.HEIGHT+2)
-        r |= p & (pos << (Bitboard.HEIGHT+2))
-        r |= p & (pos >> 3*(Bitboard.HEIGHT+2))
+        # Diagonal 1
+        m = pos & (pos >> 5)
+        m &= (m >> 10)
+        m &= 0b111000111000111000111000111000111000111000
+        
+        wins += m.bit_count()
 
-        return r & (Bitboard.BOARD_MASK ^ mask)
+        # Diagonal 2
+        #m = pos & 0b111000111100111110111111011111001111000111
+        m = pos & (pos >> (Bitboard.HEIGHT+1))
+        m &= (m >> (2*(Bitboard.HEIGHT+1)))
+        m &= 0b000111000111000111000111000111000111000111
+
+        wins += m.bit_count()
+
+        # Vertical;
+        m = pos & (pos >> 1)
+        m &= (m >> 2)
+        m &= 0b000111000111000111000111000111000111000111
+
+        wins += m.bit_count()
+
+        return wins
 
     def toMatrix(self):
         array = np.array([], dtype=int)
@@ -148,7 +141,7 @@ class Bitboard:
         return Bitboard(curr_position=self.curr_position, mask=self.mask, moves=self.moves)
 
     def __str__(self):
-        return str(self.board)
+        return self.toMatrix().__str__()
 
     def key(self):
         return self.curr_position + self.mask

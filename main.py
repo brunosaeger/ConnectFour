@@ -115,13 +115,17 @@ if __name__ == "__main__":
                 pygame.quit()
                 exit()
             elif event.type == pygame.MOUSEBUTTONDOWN and curr_player == PLAYER_HUMAN:
-                if tabuleiro.add_chip(column):
+                if tabuleiro.canPlay(column):
                     if tabuleiro.solver(column):
                         game_ended = True
                         winner = curr_player
-                    
+                        tabuleiro.add_chip(column)
+                        tabuleiro.changePlayer()
+                    else:
+                        tabuleiro.add_chip(column)
+
                     tempo[curr_player] = (pygame.time.get_ticks() - start_time) / 1000
-                    curr_player = (curr_player + 1) % 2
+                    curr_player = PLAYER_AGENT
                     start_time = pygame.time.get_ticks()
 
         # Jogada do agente
@@ -137,40 +141,34 @@ if __name__ == "__main__":
                 col = agent.choose_move(tabuleiro)
                 aval = 0
 
-            if tabuleiro.add_chip(col):
-                if tabuleiro.solver(col, verbose=True):
-                    print(f"col: {col}")
-                    print(f"curr: {tabuleiro.curr_position}")
-                    print(f"mask: {tabuleiro.mask}")
+            if tabuleiro.canPlay(col):
+                if tabuleiro.solver(col):
                     game_ended = True
                     winner = PLAYER_AGENT
+
+                tabuleiro.add_chip(col)
+
                 tempo[PLAYER_AGENT] = (pygame.time.get_ticks() - start_time) / 1000
                 curr_player = PLAYER_HUMAN
                 start_time = pygame.time.get_ticks()
+            
+        if tabuleiro.draw():
+            game_ended = True
 
         pygame.display.update()
         clock.tick(30)
 
-    screen.fill("White")
-    result_text = "Empate!" if winner not in [PLAYER_HUMAN,
-                                              PLAYER_AGENT] else f"Vitória do {'Humano' if winner == PLAYER_HUMAN else 'Agente'}!"
+    tabuleiro_m = tabuleiro.toMatrix()
+
+    for i in range(len(tabuleiro_m)):
+        for j in range(len(tabuleiro_m[i])):
+            pygame.draw.circle(screen, chip_enum[tabuleiro_m[i][j]], (CHIP_SIZE*j + CHIP_SIZE/2, CHIP_SIZE + 100 + CHIP_SIZE*i + CHIP_SIZE/2), CHIP_SIZE/2)
+
+    victor_rect = pygame.Rect(0, 0, WIDTH, 100)
+    pygame.draw.rect(screen, "White", victor_rect)
+    result_text = "Empate!" if tabuleiro.draw() else f"Vitória do {'Humano' if winner == PLAYER_HUMAN else 'Agente'}!"
     end_text = font.render(result_text, True, "Black")
-    screen.blit(end_text, (WIDTH / 2 - end_text.get_width() / 2, HEIGHT / 2 - end_text.get_height() / 2))
+    screen.blit(end_text, (victor_rect.centerx-end_text.get_rect().width/2, victor_rect.centery-end_text.get_rect().height/2))
     pygame.display.update()
     pygame.time.wait(3000)
     pygame.quit()
-
-
-    # --- BLOCO ANTIGO AQUI AMIGOS SE PRECISAR ---
-# if not game_ended and curr_player == PLAYER_AGENT:
-#     start_time = pygame.time.get_ticks()
-#     col = agent.choose_move(tabuleiro)
-#     success, row = tabuleiro.add_chip(col, PLAYER_AGENT)
-#     if success:
-#         if tabuleiro.solver(PLAYER_AGENT, row, col):
-#             game_ended = True
-#             winner = PLAYER_AGENT
-#         tempo[PLAYER_AGENT] = (pygame.time.get_ticks() - start_time) / 1000
-#         curr_player = PLAYER_HUMAN
-#         start_time = pygame.time.get_ticks()
-# --- FIM BLOCO ANTIGO AMIGOS ---

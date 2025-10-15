@@ -24,15 +24,16 @@ class Agente:
     @:return list[tuple[int, Board, bool]]: Uma lista de tuplas (coluna, novo_board, venceu?).
     """
 
-    def generate_children(self, board: Bitboard, curr_player: int):
+    def generate_children(self, board: Bitboard):
         children = []
 
         for col in board.playable_columns():
             new_board = board.copy()
 
-            if new_board.add_chip(col):
+            if new_board.canPlay(col):
                 # Usa o solver() do Board para verificar se a jogada levou à vitória
                 win = new_board.solver(col)
+                new_board.add_chip(col)
                 children.append((col, new_board, win))
 
         return children
@@ -49,23 +50,24 @@ class Agente:
     def board_to_node(self, board: Bitboard, curr_player: int, depth=0, max_depth=4) -> Node:
 
         if depth >= max_depth:
-            return Node(utility=0)
+            if curr_player == PLAYER_AGENT:
+                return Node(utility=board.possibleWins())
+            
+            return Node(utility=-board.possibleWins())
 
-        # 2️⃣ Verifica estados terminais (vitória)
         for col in board.playable_columns():
             if curr_player == PLAYER_AGENT and board.solver(col):
                 return Node(utility=1)
             if curr_player == PLAYER_HUMAN and board.solver(col):
                 return Node(utility=-1)
 
-        # 3️⃣ Empate
         if board.draw():
             return Node(utility=0)
 
         node = Node()
 
         next_player = PLAYER_HUMAN if curr_player == PLAYER_AGENT else PLAYER_AGENT
-        for _, child_board, _ in self.generate_children(board, curr_player):
+        for _, child_board, _ in self.generate_children(board):
             child_node = self.board_to_node(child_board, next_player, depth + 1, max_depth)
             node.add_child(child_node)
 
@@ -84,7 +86,7 @@ class Agente:
         best_val = -np.inf
         best_col = None
 
-        for col, child_board, win in self.generate_children(board, PLAYER_AGENT):
+        for col, child_board, win in self.generate_children(board):
             if win:
                 return col  # vitória imediata
 
@@ -99,26 +101,22 @@ class Agente:
     
     def board_to_node_time(self, board: Bitboard, curr_player: int, depth=0, max_depth=4) -> Node:
 
-        # 1️⃣ Limite de profundidade (evita explosão combinatória)
         if depth >= max_depth:
             return Node(utility=0)
 
-        # 2️⃣ Verifica estados terminais (vitória)
         for col in board.playable_columns():
             if curr_player == PLAYER_AGENT and board.solver(col):
                 return Node(utility=1)
             if curr_player == PLAYER_HUMAN and board.solver(col):
                 return Node(utility=-1)
 
-        # 3️⃣ Empate
         if board.draw():
             return Node(utility=0)
 
-        # 4️⃣ Expande recursivamente
         node = Node()
 
         next_player = PLAYER_HUMAN if curr_player == PLAYER_AGENT else PLAYER_AGENT
-        for _, child_board, _ in self.generate_children(board, curr_player):
+        for _, child_board, _ in self.generate_children(board):
             child_node = self.board_to_node(child_board, next_player, depth + 1, max_depth)
             node.add_child(child_node)
 
@@ -139,7 +137,7 @@ class Agente:
             cur_best_col = None
             cur_best_val = -np.inf
 
-            for col, child_board, win in self.generate_children(board, PLAYER_AGENT):
+            for col, child_board, win in self.generate_children(board):
                 if time.perf_counter() >= deadline:
                     break
 
