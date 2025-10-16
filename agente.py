@@ -47,19 +47,20 @@ class Agente:
             @:return Node: Raiz da subárvore correspondente a esse estado do jogo.
     """
 
-    def board_to_node(self, board: Bitboard, curr_player: int, depth=0, max_depth=4) -> Node:
+    def board_to_node(self, board: Bitboard, curr_player: int, depth=0, max_depth=4, deadline: float | None = None) -> Node:
+        if deadline is not None and time.perf_counter() >= deadline:
+            util = board.possibleWins()
+            return Node(utility=util if curr_player == PLAYER_AGENT else -util)
 
         if depth >= max_depth:
-            if curr_player == PLAYER_AGENT:
-                return Node(utility=board.possibleWins())
-            
-            return Node(utility=-board.possibleWins())
+            util = board.possibleWins()
+            return Node(utility=util if curr_player == PLAYER_AGENT else -util)
 
         for col in board.playable_columns():
             if curr_player == PLAYER_AGENT and board.solver(col):
-                return Node(utility=1)
+                return Node(utility=1_000_000_000)
             if curr_player == PLAYER_HUMAN and board.solver(col):
-                return Node(utility=-1)
+                return Node(utility=-1_000_000_000)
 
         if board.draw():
             return Node(utility=0)
@@ -67,11 +68,18 @@ class Agente:
         node = Node()
 
         next_player = PLAYER_HUMAN if curr_player == PLAYER_AGENT else PLAYER_AGENT
-        for _, child_board, _ in self.generate_children(board):
-            child_node = self.board_to_node(child_board, next_player, depth + 1, max_depth)
+        ordering = sorted(board.playable_columns(), key=lambda c: abs(c - self.cols // 2))
+        for col in ordering:
+            if deadline is not None and time.perf_counter() >= deadline:
+                break
+            new_board = board.copy()
+            win = new_board.solver(col)
+            new_board.add_chip(col)
+            child_node = self.board_to_node(new_board, next_player, depth + 1, max_depth, deadline)
             node.add_child(child_node)
 
         return node
+
 
     """
         Escolhe a melhor jogada para o agente com base no minimax puro.
@@ -149,22 +157,26 @@ class Agente:
         best_val = -np.inf
         depth = 1
 
-        while True:
-            if time.perf_counter() >= deadline:
-                break
+        ordering = sorted(board.playable_columns(), key=lambda c: abs(c - self.cols // 2))
 
+        # aprofunda enqnt houver tempo aqui
+        while time.perf_counter() < deadline:
             cur_best_col = None
             cur_best_val = -np.inf
 
-            for col, child_board, win in self.generate_children(board):
+            for col in ordering:
                 if time.perf_counter() >= deadline:
                     break
 
-                if win:
-                    return col, 1_000_000_000 #vitoria forçada
-                
+                b2 = board.copy()
+                win = b2.solver(col)
+                b2.add_chip(col)
 
-                node = self.board_to_node(child_board, PLAYER_HUMAN, 0, np.inf)
+                if win:
+                    return col, 1_000_000_000 
+
+                #considera a deadline
+                node = self.board_to_node(b2, PLAYER_HUMAN, 0, depth, deadline=deadline)
                 val = ordered_alphabeta(node)
 
                 if val > cur_best_val:
@@ -174,17 +186,20 @@ class Agente:
             if cur_best_col is not None:
                 best_col, best_val = cur_best_col, cur_best_val
 
-
             if best_val >= 1_000_000_000:
                 break
 
             depth += 1
 
-            if best_col is None:
-                for col, _, _ in self.generate_children(board, PLAYER_AGENT):
-                    best_col = col
-                    best_val = 0
-                    break
+        if best_col is None:
+            pcs = board.playable_columns()
+            if pcs:
+                best_col = pcs[0]
+                best_val = 0
+            else:
+                best_col = 0
+                best_val = 0
 
-            return best_col, best_val
+        return best_col, best_val
+
         
