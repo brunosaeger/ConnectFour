@@ -1,4 +1,5 @@
 import numpy as np
+from statistics import mean
 
 class Bitboard:
     WIDTH = 7
@@ -165,7 +166,7 @@ class Bitboard:
         values[1] *= weights[1]
         values[2] *= weights[2]
 
-        return sum(values)
+        return mean([sum(values), self.centrality()])
 
     def blockings(self):
         op_board = self.curr_position ^ self.mask
@@ -191,15 +192,10 @@ class Bitboard:
 
         return [seq[i] - blocks[i] for i in range(len(seq))]
 
-    def centrality(self, curr_pos=None, mask=None):
-        if curr_pos is None:
-            curr_pos = self.curr_position
-        if mask is None:
-            mask = self.mask
-
+    def centrality(self):
         weights = [1, 5, 1, 10, 1, 5, 1]
         value = 0
-        pos = (mask ^ Bitboard.BOARD_MASK) | curr_pos
+        pos = (self.mask ^ Bitboard.BOARD_MASK) | self.curr_position
 
         for i in range(len(weights)):
             m = pos & self.column_mask(i)

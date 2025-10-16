@@ -10,10 +10,11 @@ EMPTY = 2          # valor que representa casa vazia
 
 
 class Agente:
-    def __init__(self, rows, cols, max_depth):
+    def __init__(self, rows, cols, max_depth, difficulty):
         self.rows = rows
         self.cols = cols
         self.max_depth = max_depth
+        self.difficulty = difficulty
 
     """
     Gera todos os possíveis tabuleiros após uma jogada do jogador atual.
@@ -51,9 +52,19 @@ class Agente:
 
         if depth >= max_depth:
             if curr_player == PLAYER_AGENT:
-                return Node(utility=board.possibleWins())
+                if self.difficulty == 0:
+                    return Node(utility=board.possibleWins())
+                elif self.difficulty == 1:
+                    return Node(utility=board.intermediate_heur())
+                else:
+                    return Node(utility=board.adv_heur())
             
-            return Node(utility=-board.possibleWins())
+            if self.difficulty == 0:
+                return Node(utility=-board.possibleWins())
+            elif self.difficulty == 1:
+                return Node(utility=-board.intermediate_heur())
+            else:
+                return Node(utility=-board.adv_heur())
 
         for col in board.playable_columns():
             if curr_player == PLAYER_AGENT and board.solver(col):

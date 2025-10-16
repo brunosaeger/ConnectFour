@@ -32,8 +32,6 @@ if __name__ == "__main__":
     tempo = [0, 0]
     aval = 0
 
-    agent = Agente(N_ROWS, N_COLS, 3)
-
     # Tela Inicial
 
     while game_start:
@@ -73,6 +71,8 @@ if __name__ == "__main__":
 
         pygame.display.update()
         clock.tick(30)
+
+    agent = Agente(N_ROWS, N_COLS, 3, difficulty)
 
     # Tela de Jogo
 
@@ -140,14 +140,23 @@ if __name__ == "__main__":
                 col = agent.choose_move_alphabeta(tabuleiro, 5)
             else:  # iniciante com minimax simples
                 col = agent.choose_move(tabuleiro, 3)
-                aval = 0
 
             if tabuleiro.canPlay(col):
                 if tabuleiro.solver(col):
                     game_ended = True
                     winner = PLAYER_AGENT
 
-                tabuleiro.add_chip(col)
+                if difficulty == 0:
+                    aval = tabuleiro.possibleWins()
+                    tabuleiro.add_chip(col)
+                elif difficulty == 1:
+                    tabuleiro.add_chip(col)
+                    tabuleiro.changePlayer()
+                    aval = tabuleiro.intermediate_heur()
+                    tabuleiro.changePlayer()
+                else:
+                    aval = tabuleiro.adv_heur()
+                    tabuleiro.add_chip(col)
 
                 tempo[PLAYER_AGENT] = (pygame.time.get_ticks() - start_time) / 1000
                 curr_player = PLAYER_HUMAN
