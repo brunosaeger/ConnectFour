@@ -179,7 +179,7 @@ class Bitboard:
             if self.curr_position & mask:
                 cont += 1
 
-                if op_board & (1 << (i+1)):
+                if (op_board & (1 << (i+1))) and cont > 0 and cont < 4:
                     blocks[cont-1] += 1
             else:
                 cont = 0
