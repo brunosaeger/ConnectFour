@@ -1,3 +1,3 @@
 Genetic Connect Four
 
-A connect four game made with genetic algorithm
+A connect four built with genetic algorithm
